@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Engineering Drawings: Checking for Understanding</title>
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="%231b1f45"/><path d="M15 31 L27 43 L49 19" fill="none" stroke="%23ea008a" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><rect x="12" y="52" width="40" height="5" rx="2.5" fill="%23fff" opacity=".25"/><rect x="12" y="52" width="26" height="5" rx="2.5" fill="%23fff"/></svg>'>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --navy: #1b1f45;
+        --pink: #ea008a;
+        --mid-grey: #9a9a9a;
+        --light-grey: #e8e8e8;
+        --blank: #f0f3f6;
+        --tint: #e9ecf5;
+        --cond: 'Barlow Condensed', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        --ease: cubic-bezier(.2,.8,.2,1);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body { font-family: 'Barlow', 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #eaeaea; color: var(--navy);
+        display: flex; align-items: center; justify-content: center; overflow: hidden; -webkit-user-select: none; user-select: none; }
+    .stage { width: 1280px; height: 720px; background: #fff; border-top: 6px solid var(--navy); position: relative; padding: 36px 64px 0; flex-shrink: 0; overflow: hidden; transform-origin: center; }
+    .top { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 4px solid var(--navy); padding-bottom: 12px; }
+    .sheet-title { font-family: var(--cond); font-size: 44px; font-weight: 900; text-transform: uppercase; letter-spacing: .01em; margin: 0; line-height: 1; }
+    .sheet-title span { color: var(--pink); }
+    .counter { font-family: var(--cond); font-size: 22px; font-weight: 800; letter-spacing: .08em; color: var(--mid-grey); text-transform: uppercase; }
+    .counter b { color: var(--navy); }
+    .content { position: absolute; left: 64px; right: 64px; top: 124px; bottom: 108px; }
+    .caption { position: absolute; left: 64px; right: 64px; bottom: 28px; min-height: 60px; display: flex; align-items: center; gap: 16px; font-size: 25px; font-weight: 500; line-height: 1.32; }
+    .caption::before { content: ''; width: 10px; height: 10px; background: var(--pink); flex-shrink: 0; }
+    .caption .txt { flex: 1; }
+    .caption b { color: var(--pink); font-weight: 800; }
+    .caption b.no { color: var(--navy); }
+    .caption .in { animation: capIn .45s var(--ease); display: block; }
+    @keyframes capIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    .progress { position: absolute; left: 0; bottom: 0; height: 6px; background: var(--pink); width: 0; transition: width .6s var(--ease); }
+
+    .next { font-family: var(--cond); font-size: 26px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; background: var(--pink); color: #fff;
+        border: none; border-radius: 8px; padding: 12px 30px; cursor: pointer; flex-shrink: 0; }
+    .next[hidden] { display: none; }
+    .next:disabled { background: #c3c6d0; cursor: default; }
+    button:focus-visible, [tabindex]:focus-visible, input:focus-visible { outline: 3px solid var(--pink); outline-offset: 3px; }
+    svg [tabindex]:focus-visible { outline: none; }
+    .next:focus-visible { outline-color: var(--navy); }
+    .pop-in { animation: capIn .45s var(--ease); }
+    @keyframes shake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+
+    /* question frame */
+    .q { display: flex; flex-direction: column; height: 100%; }
+    .qhead { display: flex; align-items: center; gap: 18px; }
+    .qtitle { font-size: 40px; font-weight: 800; line-height: 1.15; }
+    .tchip { font-family: var(--cond); font-size: 20px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--pink); border: 3px solid var(--pink); border-radius: 6px; padding: 3px 12px 2px; }
+    .sctag { margin-left: auto; font-family: var(--cond); font-size: 20px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--navy); box-shadow: inset 0 0 0 3px var(--navy); border-radius: 6px; padding: 6px 12px 5px; line-height: 1; }
+    .prompt { font-size: 28px; font-weight: 600; margin-top: 6px; line-height: 1.3; }
+    .prompt b { color: var(--pink); font-weight: 800; }
+    .body { flex: 1; min-height: 0; margin-top: 14px; display: flex; align-items: center; justify-content: center; gap: 30px; }
+    .center { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
+    .dlbl { font-family: var(--cond); font-size: 20px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--mid-grey); }
+
+    /* drawing conventions */
+    svg { overflow: visible; display: block; }
+    .pt { fill: #fff; stroke: var(--navy); stroke-width: 3; }
+    .pt.nf { fill: none; }
+    .cl { fill: none; stroke: var(--navy); stroke-width: 1.5; stroke-dasharray: 14 4 3 4; }
+    .dl { stroke: var(--pink); stroke-width: 2; fill: none; }
+    .dval { font-family: var(--cond); font-size: 22px; font-weight: 800; fill: var(--pink); }
+    .dval.sm { font-size: 17px; }
+    .dvaln { font-family: var(--cond); font-size: 22px; font-weight: 800; fill: var(--navy); }
+    .proj { stroke: #b5b9c6; stroke-width: 1.5; stroke-dasharray: 6 5; }
+    .vlbl { font-family: var(--cond); font-size: 16px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; fill: var(--navy); }
+    .rtick { stroke: var(--navy); stroke-width: 1.1; }
+    .rtick.c { stroke-width: 1.8; }
+    .rnum { font-family: var(--cond); font-size: 14px; font-weight: 800; fill: var(--navy); }
+    .rnum.sm { font-size: 12px; }
+    .oname { font-family: var(--cond); font-size: 20px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; fill: var(--navy); }
+    .spd { font-family: var(--cond); font-size: 22px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; fill: var(--mid-grey); }
+    .leg { font-family: 'Barlow', 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 18px; font-weight: 600; fill: var(--mid-grey); }
+    .hn { font-family: var(--cond); font-size: 17px; font-weight: 900; fill: var(--navy); }
+    .dsym { display: inline-block; position: relative; width: .66em; height: .66em; border: .1em solid currentColor; border-radius: 50%; box-sizing: border-box; margin: 0 .06em 0 .03em; vertical-align: 0; }
+    .dsym::after { content: ''; position: absolute; left: 50%; top: 50%; width: .1em; height: .92em; background: currentColor; border-radius: .04em; transform: translate(-50%, -50%) rotate(45deg); }
+    .reveal { animation: fadeIn .55s var(--ease) both; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .sq, .rl, .pm { cursor: grab; touch-action: none; }
+    .sq.drag, .rl.drag, .pm.drag { cursor: grabbing; }
+    .sq:focus-visible .stk, .rl:focus-visible .rbody { stroke: var(--pink); stroke-width: 3; }
+    .pm .pr { fill: rgba(255,255,255,.82); stroke: var(--navy); stroke-width: 2.5; transition: stroke .2s; }
+    .pm:focus-visible .pr { stroke: var(--pink); }
+    .pm.right { cursor: default; }
+    .pm.right .pr { stroke: var(--pink); stroke-width: 4; }
+    .pm.wrong .pr { stroke-dasharray: 5 4; }
+
+    /* multiple choice */
+    .opts { display: grid; gap: 10px; }
+    .opt { display: flex; align-items: center; gap: 16px; border: 3px solid var(--navy); border-radius: 8px; background: #fff; padding: 12px 20px;
+        font-family: inherit; font-size: 25px; font-weight: 600; color: var(--navy); text-align: left; line-height: 1.25; cursor: pointer;
+        transition: background-color .2s, border-color .2s, color .2s, opacity .2s; }
+    .opt .l { flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; background: var(--navy); color: #fff; font-family: var(--cond); font-size: 24px; font-weight: 900;
+        display: flex; align-items: center; justify-content: center; }
+    .pgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; width: 100%; }
+    .pcard { position: relative; border: 3px solid var(--navy); border-radius: 8px; background: #fff; padding: 16px 4px 12px; cursor: pointer;
+        display: flex; flex-direction: column; align-items: center; gap: 8px; font-family: inherit; color: var(--navy); transition: background-color .2s, border-color .2s, opacity .2s; }
+    .pcard .l { position: absolute; left: 10px; top: 10px; width: 38px; height: 38px; border-radius: 50%; background: var(--navy); color: #fff; font-family: var(--cond); font-size: 23px; font-weight: 900;
+        display: flex; align-items: center; justify-content: center; transition: background-color .2s; }
+    .pcard .cap { font-size: 22px; font-weight: 700; line-height: 1.2; text-align: center; }
+    .pcard:hover:not(:disabled) { background: #f6f7fb; }
+    .pcard.sel { background: var(--tint); }
+    .pcard.sel .l { background: var(--pink); }
+    .pcard.right, .pcard.right:hover { border-color: var(--pink); background: #fff; box-shadow: 0 0 0 5px rgba(234,0,138,.18); opacity: 1; }
+    .pcard.right .l { background: var(--pink); }
+    .pcard.wrong { border-style: dashed; opacity: .45; animation: shake .4s; cursor: default; }
+    .pcard:disabled { cursor: default; }
+
+    /* scenes */
+    .scene { position: relative; border: 3px solid var(--navy); border-radius: 8px; overflow: hidden; flex-shrink: 0; background: #fff; }
+    .scene > svg { overflow: hidden; }
+
+    /* drag tiles */
+    .tile { font-family: inherit; font-size: 24px; font-weight: 700; color: var(--navy); background: #fff; border: 3px solid var(--navy); border-radius: 8px; padding: 6px 16px; line-height: 1.25;
+        cursor: grab; touch-action: none; position: relative; z-index: 2; transition: transform .3s var(--ease), box-shadow .2s, border-color .2s; box-shadow: 0 4px 0 #c3c6d0; white-space: nowrap; text-align: center; }
+    .tile.sel { border-color: var(--pink); box-shadow: 0 0 0 4px rgba(234,0,138,.22); }
+    .tile.drag { transition: none; cursor: grabbing; z-index: 30; box-shadow: 0 14px 30px rgba(27,31,69,.25); border-color: var(--pink); }
+    .tile.right { background: var(--pink); color: #fff; border-color: var(--pink); box-shadow: none; cursor: default; }
+    .tile.wrong { border-style: dashed; background: var(--tint); box-shadow: none; animation: shake .4s; }
+    .pool { background: var(--blank); border-radius: 8px; padding: 14px; display: flex; flex-wrap: wrap; gap: 10px; align-content: center; justify-content: center; transition: background-color .2s; }
+    .pool.hover { background: #e3e7ee; }
+
+    /* label a drawing */
+    .bwrap { position: relative; border: 3px solid var(--navy); border-radius: 8px; flex-shrink: 0; }
+    .bwrap > svg { position: absolute; left: 0; top: 0; }
+    .slot { position: absolute; width: 200px; height: 50px; border: 3px dashed #c3c6d0; border-radius: 8px; background: #fff; display: flex; align-items: center; justify-content: center; transition: border-color .2s, background-color .2s; }
+    .slot.hover, .slot.armed:hover { border-color: var(--pink); background: #fdf0f7; }
+    .slot.armed { border-color: #e7a3c9; cursor: pointer; }
+    .slot.filled { border-color: transparent; background: none; }
+    .slot.wrong { animation: shake .4s; }
+    .slot .tile { box-shadow: none; padding: 4px 12px; font-size: 22px; }
+    .bside { width: 320px; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
+    .bside .pool { flex: 1; flex-direction: column; flex-wrap: nowrap; align-items: center; justify-content: center; gap: 6px; padding: 10px; }
+    .bside .pool.wrapr { flex-direction: row; flex-wrap: wrap; align-content: center; gap: 14px; }
+    .bside .tile { font-size: 21px; padding: 4px 12px; }
+
+    /* fill the gaps */
+    .cloze { flex: 1; display: flex; flex-direction: column; gap: 6px; align-self: stretch; justify-content: center; }
+    .cline { display: flex; align-items: center; flex-wrap: wrap; font-size: 26px; font-weight: 600; min-height: 66px; border-bottom: 2px solid var(--light-grey); }
+    .blank { display: inline-flex; align-items: center; justify-content: center; min-width: 100px; height: 50px; margin: 0 10px; border: 3px dashed #c3c6d0; border-radius: 8px; transition: border-color .2s, background-color .2s; }
+    .blank.hover, .blank.armed:hover { border-color: var(--pink); background: #fdf0f7; }
+    .blank.armed { border-color: #e7a3c9; cursor: pointer; }
+    .blank.filled { border-color: transparent; }
+    .blank.wrong { animation: shake .4s; }
+    .blank .tile { box-shadow: none; padding: 4px 14px; }
+    .tray { margin-top: 14px; min-height: 78px; }
+
+    /* typed answers */
+    .nin { width: 110px; font-family: inherit; font-size: 28px; font-weight: 700; color: var(--navy); background: #fff; border: 3px solid var(--navy); border-radius: 8px; padding: 4px 8px; text-align: center; outline: none;
+        -webkit-user-select: text; user-select: text; transition: border-color .2s, background-color .2s, color .2s; }
+    .nin:focus { border-color: var(--pink); }
+    .nin:focus-visible { outline: none; }
+    .nin.right { background: var(--pink); border-color: var(--pink); color: #fff; }
+    .nin.wrong { border-style: dashed; animation: shake .4s; }
+    .qrows { width: 380px; flex-shrink: 0; display: flex; flex-direction: column; gap: 14px; }
+    .qrow { display: grid; grid-template-columns: 34px 1fr 96px 36px; align-items: center; gap: 10px; font-size: 22px; font-weight: 600; line-height: 1.2; }
+    .qrow .qn { width: 34px; height: 34px; border-radius: 50%; background: var(--navy); color: #fff; font-family: var(--cond); font-size: 20px; font-weight: 900; display: flex; align-items: center; justify-content: center; }
+    .qrow .nin { width: 96px; font-size: 25px; padding: 3px 4px; }
+    .u { font-family: var(--cond); font-size: 20px; font-weight: 800; color: var(--mid-grey); text-transform: uppercase; letter-spacing: .06em; }
+
+    /* side panels and tools */
+    .side { width: 270px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; align-self: stretch; justify-content: center; }
+    .card { border: 3px solid var(--navy); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .tools { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+    .tool { flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px; white-space: nowrap; font-family: var(--cond); font-size: 20px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+        background: #fff; color: var(--navy); border: 3px solid var(--navy); border-radius: 8px; padding: 9px 10px 8px; cursor: pointer; transition: opacity .2s, background-color .2s; }
+    .tool.pk { background: var(--pink); border-color: var(--pink); color: #fff; }
+    .tool:hover:not(:disabled) { background: #f6f7fb; }
+    .tool.pk:hover:not(:disabled) { background: #d1007b; }
+    .tool:disabled { opacity: .35; cursor: default; }
+    .tool svg { width: 20px; height: 20px; flex-shrink: 0; }
+    .note { font-size: 18px; font-weight: 600; color: var(--mid-grey); line-height: 1.3; }
+    .note b { color: var(--navy); font-weight: 800; }
+    .mrow { display: flex; align-items: center; gap: 12px; font-size: 24px; font-weight: 700; }
+
+    /* candidate spots */
+    .bd { position: relative; }
+    .cand { position: absolute; width: 40px; height: 40px; border-radius: 50%; background: var(--navy); color: #fff; font-family: var(--cond); font-size: 22px; font-weight: 900;
+        border: 3px solid #fff; box-shadow: 0 0 0 2px var(--navy); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; transition: background-color .2s, box-shadow .2s, opacity .2s; }
+    .cand:hover:not(:disabled) { background: #2b3166; }
+    .cand.sel { background: var(--pink); box-shadow: 0 0 0 2px var(--pink), 0 0 0 8px rgba(234,0,138,.22); }
+    .cand.right, .cand.right:hover { background: var(--pink); box-shadow: 0 0 0 2px var(--pink); }
+    .cand.wrong { opacity: .3; animation: shake .4s; }
+    .cand:disabled { cursor: default; }
+
+    /* end */
+    .scorecard { border: 3px solid var(--pink); border-radius: 8px; padding: 22px 60px 26px; text-align: center; display: flex; flex-direction: column; align-items: center; }
+    .scorecard .big { font-family: var(--cond); font-size: 96px; font-weight: 900; color: var(--pink); line-height: 1; margin-top: 8px; }
+    .scorecard .dlbl { margin-top: 8px; }
+    .scorecard .sub { margin-top: 22px; }
+    .dots { display: flex; gap: 8px; justify-content: center; margin-top: 22px; }
+    .dots span { width: 34px; height: 34px; border-radius: 6px; border: 3px solid var(--navy); font-family: var(--cond); font-size: 17px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+    .dots span.y { background: var(--pink); border-color: var(--pink); color: #fff; }
+    .again { margin-top: 26px; font-family: var(--cond); font-size: 22px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+        background: #fff; color: var(--navy); border: 3px solid var(--navy); border-radius: 8px; padding: 8px 22px; cursor: pointer; }
+
+    /* buckles */
+    .hright { display: flex; align-items: flex-end; gap: 28px; }
+    .bcount { display: flex; align-items: center; gap: 10px; }
+    .counter-icon { width: 34px; height: 34px; display: block; }
+    .bcount .num { font-family: var(--cond); font-size: 34px; font-weight: 900; line-height: 1; }
+    .bcount .lbl { font-family: var(--cond); font-size: 18px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--mid-grey); }
+    .done-buckle { width: 90px; height: 90px; }
+    .award { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%) scale(.8); opacity: 0; pointer-events: none; z-index: 30;
+        background: #fff; border: 3px solid var(--pink); border-radius: 12px; padding: 24px 40px; display: flex; flex-direction: column; align-items: center; gap: 10px;
+        box-shadow: 0 20px 50px rgba(27,31,69,.25); transition: opacity .3s, transform .35s var(--ease); }
+    .award.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    .award.hide { opacity: 0; transform: translate(-50%, -60%) scale(.95); }
+    .award-img { width: 140px; height: auto; }
+    .award-text { font-family: var(--cond); font-size: 40px; font-weight: 900; color: var(--pink); text-transform: uppercase; letter-spacing: .04em; }
+    .confetti-canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 29; }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+    <div class="top">
+        <h1 class="sheet-title">Checking <span>drawings</span></h1>
+        <div class="hright">
+            <div class="counter" id="counter"></div>
+            <div class="bcount" title="Buckles earned">
+                <img src="buckle.svg" alt="" class="counter-icon" onerror="this.style.visibility='hidden'">
+                <div class="num" id="buckleCount">0</div>
+                <div class="lbl">Buckles</div>
+            </div>
+        </div>
+    </div>
+    <div class="content" id="content"></div>
+    <div class="caption"><div class="txt" id="cap"></div><button class="next" id="next" hidden>Check</button></div>
+    <div class="progress" id="progress"></div>
+</div>
+
+<div class="award" id="award" role="status" aria-live="polite">
+    <img src="penguin-with-buckle.svg" alt="" class="award-img" onerror="this.style.display='none'">
+    <div class="award-text" id="awardText">+1 Buckle!</div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const content = $('#content'), cap = $('#cap'), btn = $('#next'), counter = $('#counter'), progress = $('#progress');
+const PK = '#ea008a', NV = '#1b1f45', GR = '#c9ccd6', DT = '#b5b9c6', LT = '#f0f3f6', WOOD = '#f5f0e6', GRAIN = '#e4dbc8', STEEL = '#e4e8ef';
+let scaleK = 1;
+function el(tag, cls, html) { const e = document.createElement(tag); if (cls) e.className = cls; if (html !== undefined) e.innerHTML = html; return e; }
+function say(html) { cap.innerHTML = `<span class="in">${html}</span>`; symFix(cap); }
+/* the diameter symbol: drawn as a circle with a slash so it never looks like the letter O */
+const DSYM = '\u2300', SVGNS = 'http://www.w3.org/2000/svg';
+function symFix(root) {
+    const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.nodeValue.includes(DSYM) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP });
+    const nodes = []; while (tw.nextNode()) nodes.push(tw.currentNode);
+    const texts = new Set();
+    nodes.forEach(n => {
+        const inSvg = n.parentNode.namespaceURI === SVGNS, frag = document.createDocumentFragment();
+        n.nodeValue.split(DSYM).forEach((part, i) => {
+            if (i) {
+                if (inSvg) { const t = document.createElementNS(SVGNS, 'tspan'); t.setAttribute('class', 'dsym'); t.setAttribute('fill-opacity', '0'); t.textContent = 'O'; frag.appendChild(t); }
+                else { const sp = document.createElement('span'); sp.className = 'dsym'; sp.setAttribute('role', 'img'); sp.setAttribute('aria-label', 'diameter'); frag.appendChild(sp); }
+            }
+            if (part) frag.appendChild(document.createTextNode(part));
+        });
+        if (inSvg) texts.add(n.parentNode.closest('text'));
+        n.parentNode.replaceChild(frag, n);
+    });
+    texts.forEach(text => {
+        if (!text) return;
+        let idx = 0, g = '';
+        const w = document.createTreeWalker(text, NodeFilter.SHOW_TEXT);
+        while (w.nextNode()) {
+            const n = w.currentNode, sym = n.parentNode.classList && n.parentNode.classList.contains('dsym');
+            if (sym) {
+                try {
+                    const b = text.getExtentOfChar(idx), base = text.getStartPositionOfChar(idx).y, cs = getComputedStyle(n.parentNode), fs = parseFloat(cs.fontSize), col = cs.fill;
+                    const ch = fs * .7, r = Math.min(b.width * .5, ch * .5) * .9, cx = b.x + b.width / 2, cy = base - ch / 2, sw = fs * .095, k = r * 1.3 * .7071;
+                    g += `<circle cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(r)}" fill="none" stroke="${col}" stroke-width="${f1(sw)}"/><line x1="${f1(cx - k)}" y1="${f1(cy + k)}" x2="${f1(cx + k)}" y2="${f1(cy - k)}" stroke="${col}" stroke-width="${f1(sw)}" stroke-linecap="round"/>`;
+                } catch (e) {}
+            }
+            idx += n.nodeValue.length;
+        }
+        const gg = document.createElementNS(SVGNS, 'g'); gg.setAttribute('class', 'dglyph');
+        if (text.getAttribute('transform')) gg.setAttribute('transform', text.getAttribute('transform'));
+        gg.innerHTML = g; text.after(gg);
+    });
+}
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const f1 = v => (+v).toFixed(1), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const PENCIL = `<svg viewBox="0 0 24 24"><path d="M4 20l1.2-4.8L16.5 3.9l3.6 3.6L8.8 18.8z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M14 6.4l3.6 3.6" stroke="currentColor" stroke-width="2.4"/></svg>`;
+
+/* ---------- animation helpers ---------- */
+let runId = 0;
+const easeOut = t => 1 - (1 - t) * (1 - t), easeInOut = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+function play(dur, step, guard) {
+    const id = runId, ok = guard || (() => id === runId);
+    return new Promise(res => {
+        const st = performance.now();
+        const f = n => { if (!ok()) return; const t = Math.min(1, (n - st) / dur); step(t); if (t < 1) requestAnimationFrame(f); else res(); };
+        requestAnimationFrame(f);
+    });
+}
+function wait(ms) { const id = runId; return new Promise(r => setTimeout(() => { if (id === runId) r(); }, ms)); }
+
+/* ---------- drawing conventions ---------- */
+function ah(x, y, ang, c = PK, L = 11, W = 4) {
+    const ux = Math.cos(ang), uy = Math.sin(ang), bx = x - ux * L, by = y - uy * L, px = -uy * W, py = ux * W;
+    return `<polygon points="${f1(x)},${f1(y)} ${f1(bx + px)},${f1(by + py)} ${f1(bx - px)},${f1(by - py)}" fill="${c}"/>`;
+}
+/* horizontal dimension: x1..x2, extension lines from edge ye out to yd (ye null = no extension lines) */
+function dimH(x1, x2, ye, yd, txt, o = {}) {
+    const s = ye === null ? 1 : (yd > ye ? 1 : -1), cls = o.cls ? ' ' + o.cls : '';
+    let r = '';
+    if (ye !== null) r += `<line class="dl" x1="${x1}" x2="${x1}" y1="${ye + s * 4}" y2="${yd + s * 6}"/><line class="dl" x1="${x2}" x2="${x2}" y1="${ye + s * 4}" y2="${yd + s * 6}"/>`;
+    r += `<line class="dl" x1="${x1}" x2="${x2}" y1="${yd}" y2="${yd}"/>${ah(x1, yd, Math.PI, PK, o.L, o.W)}${ah(x2, yd, 0, PK, o.L, o.W)}`;
+    if (txt) r += `<text class="dval${cls}" x="${f1((x1 + x2) / 2)}" y="${yd - 7}" text-anchor="middle">${txt}</text>`;
+    return r;
+}
+function dimV(y1, y2, xe, xd, txt, o = {}) {
+    const s = xe === null ? 1 : (xd > xe ? 1 : -1), cls = o.cls ? ' ' + o.cls : '';
+    let r = '';
+    if (xe !== null) r += `<line class="dl" x1="${xe + s * 4}" x2="${xd + s * 6}" y1="${y1}" y2="${y1}"/><line class="dl" x1="${xe + s * 4}" x2="${xd + s * 6}" y1="${y2}" y2="${y2}"/>`;
+    r += `<line class="dl" x1="${xd}" x2="${xd}" y1="${y1}" y2="${y2}"/>${ah(xd, y1, -Math.PI / 2, PK, o.L, o.W)}${ah(xd, y2, Math.PI / 2, PK, o.L, o.W)}`;
+    if (txt) r += `<text class="dval${cls}" text-anchor="middle" transform="translate(${xd - 7} ${f1((y1 + y2) / 2)}) rotate(-90)">${txt}</text>`;
+    return r;
+}
+const cl = (cx, cy, r, e = 12) => `<line class="cl" x1="${f1(cx - r - e)}" x2="${f1(cx + r + e)}" y1="${cy}" y2="${cy}"/><line class="cl" x1="${cx}" x2="${cx}" y1="${f1(cy - r - e)}" y2="${f1(cy + r + e)}"/>`;
+/* diameter callout: line through the centre with arrows at both edges, then a leader to the value */
+function dia(cx, cy, r, txt, o = {}) {
+    const a = o.a ?? Math.PI / 4, ux = Math.cos(a), uy = Math.sin(a), out = o.out ?? 44, sh = o.sh ?? 18, dir = ux >= 0 ? 1 : -1;
+    const sx = o.half ? cx : cx - ux * r, sy = o.half ? cy : cy - uy * r, nx = cx + ux * r, ny = cy + uy * r, ex = cx + ux * (r + out), ey = cy + uy * (r + out);
+    let s = `<polyline class="dl" points="${f1(sx)},${f1(sy)} ${f1(ex)},${f1(ey)} ${f1(ex + dir * sh)},${f1(ey)}"/>`;
+    if (!o.half) s += ah(sx, sy, a + Math.PI);
+    s += ah(nx, ny, a);
+    if (txt) s += `<text class="dval${o.cls ? ' ' + o.cls : ''}" x="${f1(ex + dir * (sh + 4))}" y="${f1(ey + 7)}" text-anchor="${dir > 0 ? 'start' : 'end'}">${txt}</text>`;
+    return s;
+}
+/* radius callout: leader from outside onto an arc */
+function radL(cx, cy, r, a, txt, o = {}) {
+    const ux = Math.cos(a), uy = Math.sin(a), px = cx + ux * r, py = cy + uy * r, out = o.out ?? 40, sh = o.sh ?? 16, ex = px + ux * out, ey = py + uy * out, dir = ux >= 0 ? 1 : -1;
+    let s = `<polyline class="dl" points="${f1(ex + dir * sh)},${f1(ey)} ${f1(ex)},${f1(ey)} ${f1(px)},${f1(py)}"/>${ah(px, py, a + Math.PI)}`;
+    if (txt) s += `<text class="dval" x="${f1(ex + dir * (sh + 4))}" y="${f1(ey + 7)}" text-anchor="${dir > 0 ? 'start' : 'end'}">${txt}</text>`;
+    return s;
+}
+/* steel rule. (x0, y0) is the 0 mark on the measuring edge; side = which side of the edge the rule body sits */
+function ruleSVG(o) {
+    const { x0, y0, mm, K, axis = 'x', side = 1, padA = 0, padB = 0, w = 30, fill = STEEL } = o;
+    let s = '';
+    const len = i => i % 10 === 0 ? w * .5 : i % 5 === 0 ? w * .34 : w * .2;
+    if (axis === 'x') {
+        const xa = x0 - padA, xb = x0 + mm * K + padB, ya = side > 0 ? y0 : y0 - w;
+        s += `<rect class="rbody" x="${f1(xa)}" y="${ya}" width="${f1(xb - xa)}" height="${w}" fill="${fill}" stroke="${NV}" stroke-width="2"/>`;
+        for (let i = 0; i <= mm; i++) {
+            const x = f1(x0 + i * K);
+            s += `<line class="rtick${i % 10 ? '' : ' c'}" x1="${x}" x2="${x}" y1="${y0}" y2="${f1(y0 + side * len(i))}"/>`;
+            if (i % 10 === 0) {
+                let an = 'middle', tx = +x;
+                if (i === 0 && padA < 8) { an = 'start'; tx += 2; }
+                if (i === mm && padB < 8) { an = 'end'; tx -= 2; }
+                s += `<text class="rnum" x="${f1(tx)}" y="${f1(side > 0 ? y0 + w * .5 + 13 : y0 - w * .5 - 3)}" text-anchor="${an}">${i}</text>`;
+            }
+        }
+    } else {
+        const ya = y0 - padA, yb = y0 + mm * K + padB, xa = side > 0 ? x0 : x0 - w;
+        s += `<rect class="rbody" x="${xa}" y="${f1(ya)}" width="${w}" height="${f1(yb - ya)}" fill="${fill}" stroke="${NV}" stroke-width="2"/>`;
+        for (let i = 0; i <= mm; i++) {
+            const y = f1(y0 + i * K);
+            s += `<line class="rtick${i % 10 ? '' : ' c'}" x1="${x0}" x2="${f1(x0 + side * len(i))}" y1="${y}" y2="${y}"/>`;
+            if (i % 10 === 0) {
+                let ty = y0 + i * K + 4.5;
+                if (i === 0 && padA < 8) ty = y0 + 12;
+                if (i === mm && padB < 8) ty = y0 + i * K - 3;
+                s += `<text class="rnum sm" x="${f1(x0 + side * w * .74)}" y="${f1(ty)}" text-anchor="middle">${i}</text>`;
+            }
+        }
+    }
+    return s;
+}
+function grainSVG(x, y, w, h, gap = 38) {
+    let g = '';
+    for (let yy = y + gap * .9; yy < y + h - 8; yy += gap) g += `<path d="M${f1(x + 8)} ${f1(yy)} q ${f1(w * .25)} -8 ${f1(w * .5)} 0 t ${f1(w * .5 - 16)} 0"/>`;
+    return `<g fill="none" stroke="${GRAIN}" stroke-width="2">${g}</g>`;
+}
+function svgPt(svg, e) { const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); }
+function dragOn(target, svg, h) {
+    target.addEventListener('pointerdown', e => {
+        if (e.button > 0) return;
+        if (h.start && h.start(svgPt(svg, e), e) === false) return;
+        e.preventDefault(); target.setPointerCapture(e.pointerId);
+        const mv = ev => h.move(svgPt(svg, ev), ev);
+        const up = ev => { target.removeEventListener('pointermove', mv); target.removeEventListener('pointerup', up); target.removeEventListener('pointercancel', up); if (h.end) h.end(svgPt(svg, ev), ev); };
+        target.addEventListener('pointermove', mv); target.addEventListener('pointerup', up); target.addEventListener('pointercancel', up);
+    });
+}
+/* drill a pilot hole: a ring ripples out and the hole appears */
+async function drill(g, x, y, lbl) {
+    g.insertAdjacentHTML('beforeend', `<g><circle class="dr" cx="${x}" cy="${y}" r="6" fill="none" stroke="${PK}" stroke-width="3"/><circle class="dh" cx="${x}" cy="${y}" r="0" fill="${NV}"/>${lbl ? `<text class="hn reveal" x="${x + 14}" y="${y - 12}">${lbl}</text>` : ''}</g>`);
+    const gg = g.lastElementChild, ring = gg.querySelector('.dr'), hole = gg.querySelector('.dh');
+    await play(650, k => { hole.setAttribute('r', f1(6 * easeOut(Math.min(1, k * 2)))); ring.setAttribute('r', f1(6 + 24 * easeOut(k))); ring.setAttribute('opacity', f1(1 - k)); });
+    ring.setAttribute('r', 10); ring.setAttribute('opacity', 1); ring.setAttribute('stroke-width', 2.5);
+}
+
+/* ---------- pictures ---------- */
+function convPic(v) {
+    let s = `<rect class="pt" x="60" y="40" width="130" height="66"/>`;
+    if (v === 'ok') s += dimH(60, 190, 106, 142, '130');
+    if (v === 'units') s += dimH(60, 190, 106, 142, '130 mm');
+    if (v === 'shift') s += dimH(80, 170, 106, 142, '130');
+    if (v === 'on') s += `<line class="dl" x1="60" x2="190" y1="106" y2="106" style="stroke-width:3"/>${ah(60, 106, Math.PI)}${ah(190, 106, 0)}<text class="dval" x="125" y="98" text-anchor="middle">130</text>`;
+    return `<svg viewBox="0 0 250 170" width="250" height="170">${s}</svg>`;
+}
+function holePic(v) {
+    let s = `<circle class="pt nf" cx="110" cy="80" r="46"/>${cl(110, 80, 46, 12)}`;
+    if (v === 'R') s += dia(110, 80, 46, 'R30');
+    if (v === 'half') s += dia(110, 80, 46, '⌀30', { half: true });
+    if (v === 'after') s += dia(110, 80, 46, '30⌀');
+    if (v === 'ok') s += dia(110, 80, 46, '⌀30');
+    return `<svg viewBox="0 0 250 170" width="250" height="170">${s}</svg>`;
+}
+function viewsPic(v) {
+    const fx = 24, fy = 50, fw = 100, fh = 70, hx = 74, hy = 85, hr = 18;
+    let s = `<rect class="pt" x="${fx}" y="${fy}" width="${fw}" height="${fh}"/><circle class="pt nf" cx="${hx}" cy="${hy}" r="${hr}"/>${cl(hx, hy, hr, 8)}`;
+    let sx = 172, sw = 14, sy = fy;
+    if (v === 'low') sy = fy + 16;
+    if (v === 'copy') { sx = 146; sw = fw; }
+    const pe = v === 'copy' ? sx - 4 : sx + sw + 10;
+    s += `<line class="proj" x1="${fx + fw + 4}" x2="${pe}" y1="${fy}" y2="${fy}"/><line class="proj" x1="${fx + fw + 4}" x2="${pe}" y1="${fy + fh}" y2="${fy + fh}"/>`;
+    s += `<rect class="pt" x="${sx}" y="${sy}" width="${sw}" height="${fh}"/>`;
+    if (v === 'copy') s += `<circle class="pt nf" cx="${sx + 50}" cy="${sy + 35}" r="${hr}"/>${cl(sx + 50, sy + 35, hr, 8)}`;
+    else s += `<line class="cl" x1="${sx - 10}" x2="${sx + sw + 10}" y1="${sy + 35}" y2="${sy + 35}"/>`;
+    if (v === 'circ') s += `<circle class="pt nf" cx="${sx + sw / 2}" cy="${sy + 35}" r="${hr}"/>`;
+    s += `<text class="vlbl" x="${hx}" y="162" text-anchor="middle">Front</text><text class="vlbl" x="${sx + sw / 2}" y="162" text-anchor="middle">Side</text>`;
+    return `<svg viewBox="0 0 250 172" width="250" height="172">${s}</svg>`;
+}
+const SM = { cls: 'sm', L: 8, W: 3 };
+
+/* =========================================================
+   QUESTIONS
+   ========================================================= */
+const QS = [
+    { kind: 'label', title: 'Anatomy of a dimension', sc: 'Dimensions', prompt: 'Drag each label to the part of the drawing it points to.',
+      w: 806, h: 336, poolLbl: 'Labels',
+      svg: `<rect class="pt" x="300" y="50" width="200" height="140"/><circle class="pt nf" cx="400" cy="120" r="34"/>${cl(400, 120, 34, 14)}${dimH(300, 500, 190, 256, '120')}
+        <g stroke="#9a9a9a" stroke-width="2"><line x1="230" y1="185" x2="300" y2="228"/><line x1="230" y1="287" x2="340" y2="256"/><line x1="576" y1="65" x2="444" y2="120"/><line x1="576" y1="195" x2="426" y2="243"/><line x1="576" y1="287" x2="497" y2="262"/></g>
+        <g fill="${NV}"><circle cx="300" cy="228" r="5"/><circle cx="340" cy="256" r="5"/><circle cx="444" cy="120" r="5"/><circle cx="426" cy="243" r="5"/><circle cx="497" cy="262" r="5"/></g>`,
+      slots: [
+        { x: 30, y: 160, ans: 'Extension line', hint: 'The thin line at this dot shows where a measurement starts. It leaves a small gap from the part.' },
+        { x: 30, y: 262, ans: 'Dimension line', hint: 'The line at this dot runs between the extension lines and carries the measurement.' },
+        { x: 576, y: 40, ans: 'Centre line', hint: 'The line at this dot is a long dash then a short dash. It crosses at the exact centre of the hole.' },
+        { x: 576, y: 170, ans: 'Value', hint: 'This dot points to a number. It gives the size in millimetres, without writing the units.' },
+        { x: 576, y: 262, ans: 'Arrowhead', hint: 'This dot points to the end of the dimension line. It marks the exact limit of the measurement.' }],
+      tiles: ['Extension line', 'Dimension line', 'Arrowhead', 'Value', 'Centre line', 'Outline'],
+      msg: 'Extension lines mark where a size starts and ends. The dimension line, arrowheads and value sit between them.' },
+
+    { kind: 'mcpic', title: 'Follow the rules', sc: 'Dimensions', prompt: 'A plate is 130 mm long. Which drawing shows this the way an engineer would?',
+      opts: [
+        { svg: convPic('units'), hint: 'Sizes on a drawing are in millimetres, but the units are never written next to the value.' },
+        { svg: convPic('shift'), hint: 'The extension lines must line up exactly with the edges being measured.' },
+        { svg: convPic('ok'), hint: '' },
+        { svg: convPic('on'), hint: 'Keep dimensions off the part. Extension lines move the measurement out where it is easy to read.' }],
+      answer: 2, msg: 'Extension lines line up with the edges, the dimension sits clear of the part, and the units are not written.' },
+
+    { kind: 'measure', title: 'Measure the bracket', sc: 'Measuring', prompt: 'Slide the steel rule into place and measure how long the bracket is.', len: 73,
+      hintFor: v => v === 7.3 ? 'Drawings use millimetres. Give your answer in mm, not cm.'
+          : (v === 71 || v === 72) ? 'Close, but check where you started. Line up the 0 mark with the left edge, not the end of the rule.'
+          : (v === 74 || v === 75) ? 'Nearly. Line the 0 mark up exactly with the left edge, then read the right edge again.'
+          : 'Line up 0 with the left edge of the bracket, then read the mark at the right edge. Each small mark is 1 mm.',
+      msg: 'With 0 on the left edge, the right edge sits on 73. The end of a rule is not always 0.' },
+
+    { kind: 'mcpic', title: 'Hole callouts', sc: '⌀ and R', prompt: 'A hole needs to be 30 mm across. Which drawing shows this correctly?',
+      opts: [
+        { svg: holePic('R'), hint: 'R means radius, which only goes half way across. R30 would make a hole 60 mm across.' },
+        { svg: holePic('half'), hint: 'A diameter line passes straight through the centre, from edge to edge.' },
+        { svg: holePic('after'), hint: 'The ⌀ symbol is written before the number, not after it.' },
+        { svg: holePic('ok'), hint: '' }],
+      answer: 3, msg: '⌀ means diameter: the full width through the centre. Holes use ⌀ because that is how they are drilled.' },
+
+    { kind: 'label', chip: 'Complete the drawing', title: 'Dimension the plate', sc: '⌀ and R',
+      prompt: 'This plate is 90 mm long and 50 mm high. It has a 20 mm hole, and its corners are rounded to a 10 mm radius.',
+      w: 806, h: 336, poolLbl: 'Dimensions', wrapPool: true,
+      svg: `<rect class="pt" x="330" y="70" width="270" height="150" rx="30"/><circle class="pt nf" cx="465" cy="145" r="30"/>${cl(465, 145, 30, 12)}
+        ${dimH(330, 600, 220, 296, '')}${dimV(70, 220, 330, 270, '')}${dia(465, 145, 30, '', { a: -Math.PI / 4, out: 110, sh: 20 })}${radL(360, 100, 30, -3 * Math.PI / 4, '', { out: 60, sh: 20 })}<g class="extra"></g>`,
+      slots: [
+        { x: 410, y: 240, w: 110, h: 46, ans: '90', hints: { '50': 'This dimension runs left to right, so it measures the length.' }, hint: 'This dimension measures the full length of the plate, from left to right.' },
+        { x: 150, y: 122, w: 110, h: 46, ans: '50', hints: { '90': 'This dimension runs top to bottom, so it measures the height.' }, hint: 'This dimension measures the height of the plate, from top to bottom.' },
+        { x: 590, y: 23, w: 110, h: 46, ans: '⌀20', hints: { 'R10': 'Holes are given as a diameter, because that is how they are drilled.', 'R20': 'R means radius. Holes are given as a diameter, with ⌀.', '20⌀': 'The ⌀ symbol is written before the number.' }, hint: 'This leader points to the hole. Holes use ⌀ for their full width.' },
+        { x: 156, y: 13, w: 110, h: 46, ans: 'R10', hints: { 'R20': 'R is the radius, from the centre to the edge. The corner radius is 10 mm.', '⌀20': 'Rounded corners use R for radius, not ⌀.', '20⌀': 'Rounded corners use R for radius, not ⌀.' }, hint: 'This leader points to a rounded corner. Corners use R for radius.' }],
+      tiles: ['90', '50', '⌀20', 'R10', 'R20', '20⌀'],
+      done: svg => { svg.querySelector('.extra').innerHTML = `<g class="reveal"><circle cx="360" cy="100" r="30" fill="none" stroke="${DT}" stroke-width="2" stroke-dasharray="5 5"/><line x1="352" x2="368" y1="100" y2="100" stroke="${NV}" stroke-width="1.5"/><line x1="360" x2="360" y1="92" y2="108" stroke="${NV}" stroke-width="1.5"/></g>`; },
+      msg: 'Lengths are plain numbers, the hole uses ⌀ for diameter and the rounded corner is part of a circle with R10.' },
+
+    { kind: 'mcpic', title: 'Matching views', sc: 'Views', prompt: 'Each drawing shows the same front view. Which side view matches it?',
+      opts: [
+        { svg: viewsPic('circ'), hint: 'From the side you can\u2019t see the round shape of the hole. You only see where it is, shown by a centre line.' },
+        { svg: viewsPic('ok'), hint: '' },
+        { svg: viewsPic('copy'), hint: 'The side view shows the thickness, so it is much thinner than the front view.' },
+        { svg: viewsPic('low'), hint: 'Views line up, so the side view must sit at exactly the same height as the front view.' }],
+      answer: 1, msg: 'The side view lines up with the front view and shows the thickness. The hole appears as a centre line.' },
+
+    { kind: 'inputs', title: 'Read the drawing', sc: 'Views', prompt: 'Use both views to answer each question.',
+      svg: `<rect class="pt" x="70" y="90" width="480" height="160"/><circle class="pt nf" cx="150" cy="170" r="12"/><circle class="pt nf" cx="470" cy="170" r="12"/>
+        <line class="cl" x1="150" x2="150" y1="40" y2="190"/><line class="cl" x1="130" x2="170" y1="170" y2="170"/><line class="cl" x1="470" x2="470" y1="40" y2="190"/><line class="cl" x1="450" x2="490" y1="170" y2="170"/>
+        <line class="dl" x1="70" x2="70" y1="86" y2="40"/><line class="dl" x1="550" x2="550" y1="86" y2="40"/>
+        ${dimH(70, 150, null, 50, '20')}${dimH(470, 550, null, 50, '20')}${dimH(70, 550, 250, 294, '120')}${dimV(90, 250, 70, 30, '40')}${dia(150, 170, 12, '2 × ⌀6', { a: -Math.PI / 4, out: 130, sh: 20 })}
+        <line class="proj" x1="556" x2="624" y1="90" y2="90"/><line class="proj" x1="556" x2="624" y1="250" y2="250"/>
+        <rect class="pt" x="630" y="90" width="48" height="160"/><line class="cl" x1="618" x2="690" y1="170" y2="170"/>${dimH(630, 678, 250, 294, '12')}
+        <text class="vlbl" x="310" y="324" text-anchor="middle">Front view</text><text class="vlbl" x="654" y="324" text-anchor="middle">Side view</text>`,
+      rows: [
+        { t: 'Length', a: 120, h: v => v === 40 ? 'That is the height. The length runs left to right along the front view.' : 'Find the dimension that spans the full front view, left to right.' },
+        { t: 'Thickness', a: 12, h: () => 'Thickness can\u2019t be seen from the front. Look at the side view.' },
+        { t: 'Radius of one hole', a: 3, h: v => v === 6 ? '⌀6 is the diameter. The radius is half of that.' : 'The holes are labelled ⌀6. The radius is half of the diameter.' },
+        { t: 'Hole centre to hole centre', a: 80, h: v => v === 100 ? 'Both holes are 20 mm in from an end, so take off 20 twice.' : 'Each hole centre is 20 mm in from an end. Take both away from the full length.' }],
+      msg: 'Length and holes come from the front view, thickness from the side view. The holes are 120 \u2212 20 \u2212 20 = 80 mm apart.' },
+
+    { kind: 'spot', title: 'Find the pilot hole', sc: 'Marking out', prompt: 'Use the drawing to choose where the pilot hole should be drilled.',
+      drawing: `<svg viewBox="0 0 400 300" width="400" height="300"><rect class="pt" x="100" y="80" width="240" height="144"/><circle class="pt nf" cx="172" cy="128" r="12"/>
+        <line class="cl" x1="172" x2="172" y1="40" y2="146"/><line class="cl" x1="46" x2="190" y1="128" y2="128"/>
+        <line class="dl" x1="100" x2="100" y1="76" y2="40"/><line class="dl" x1="96" x2="46" y1="80" y2="80"/>
+        ${dimH(100, 172, null, 50, '30')}${dimV(80, 128, null, 56, '20')}${dimH(100, 340, 224, 262, '100')}${dimV(80, 224, 340, 376, '60')}${dia(172, 128, 12, '⌀10', { out: 40 })}</svg>`,
+      opts: [
+        { x: 140, y: 160, dx: -32, dy: 32, hint: 'That spot is 20 mm across and 30 mm down. Check which way each dimension on the drawing runs.' },
+        { x: 180, y: 120, dx: 32, dy: -32, hint: '' },
+        { x: 340, y: 120, dx: 32, dy: -32, hint: 'That spot is 30 mm from the right edge. The drawing measures from the left edge.' },
+        { x: 180, y: 200, dx: 32, dy: 32, hint: 'That spot is 20 mm up from the bottom edge. The drawing measures down from the top edge.' }],
+      answer: 1, msg: 'Measure 30 mm from the left edge and 20 mm down from the top. The pilot hole goes where the two meet.' },
+
+    { kind: 'square', title: 'Mark the cut line', sc: 'Marking out', prompt: 'Slide the try square to the length on the drawing, then mark the cut line.',
+      L: 140, Wmm: 40, targets: [75], need: 1, start: 28,
+      drawing: `<svg viewBox="0 0 250 160" width="240" height="154"><rect class="pt" x="50" y="30" width="165" height="88"/>${dimH(50, 215, 118, 148, '75')}${dimV(30, 118, 50, 24, '40')}</svg>`,
+      note: 'Line up the <b>pink edge</b> of the blade, then press <b>Mark line</b>.',
+      hintFor: m => m === 65 ? 'That line is 75 mm from the right end. Measure from 0, at the left end of the board.'
+          : m === 40 ? '40 mm is the width of the piece. The cut sets its length.'
+          : 'Not on 75 yet. Use the magnifier to line the pink edge of the blade up exactly with 75.',
+      done: async c => {
+          const x = c.BX + 75 * c.K, xe = c.BX + c.BL;
+          c.res.innerHTML = `<g class="reveal"><rect x="${x}" y="${c.BY}" width="${xe - x}" height="${c.BH}" fill="url(#${c.hid})"/><text class="spd" x="${(x + xe) / 2}" y="${c.BY + c.BH - 26}" text-anchor="middle">Offcut</text>${dimH(c.BX, x, c.BY, c.BY - 46, '75')}</g>`;
+          await wait(500);
+      },
+      msg: 'Measure from the 0 end, line the blade up exactly, then mark. Measure twice, cut once.' },
+
+    { kind: 'square', title: 'Find the middle', sc: 'Marking out', prompt: 'Mark a line across the exact middle of this board.',
+      L: 126, Wmm: 40, ruleMM: 150, targets: [63], need: 1, start: 20,
+      drawing: `<svg viewBox="0 0 250 160" width="240" height="154"><rect class="pt" x="35" y="36" width="180" height="70"/><line x1="125" x2="125" y1="36" y2="106" stroke="${NV}" stroke-width="2"/>
+        <line class="dl" x1="125" x2="125" y1="110" y2="146"/>${dimH(35, 125, 106, 140, 'EQ')}${dimH(125, 215, 106, 140, 'EQ')}</svg>`,
+      note: '<b>EQ</b> means the two lengths are equal. Find the length of the board first.',
+      hintFor: m => m === 126 ? 'That is the end of the board. The middle is half of the full length.'
+          : m === 75 ? 'That is half of the rule, not half of the board. Read where the right end of the board lands, then halve it.'
+          : 'First read the rule where the right end of the board lands. The middle is half of that length.',
+      done: async c => {
+          const x = c.BX + 63 * c.K, xe = c.BX + c.BL;
+          c.res.innerHTML = `<g class="reveal">${dimH(c.BX, xe, c.BY, c.BY - 80, '126')}${dimH(c.BX, x, null, c.BY - 40, '63')}${dimH(x, xe, null, c.BY - 40, '63')}<line class="dl" x1="${x}" x2="${x}" y1="${c.BY - 4}" y2="${c.BY - 46}"/></g>`;
+          await wait(500);
+      },
+      msg: 'The board is 126 mm long, so the middle is 63 mm from either end.' },
+
+    { kind: 'square', title: 'Move the rule', sc: 'Marking out', prompt: 'Mark line A, then measure on from line A to mark line B.',
+      L: 160, Wmm: 40, K: 5, BX: 40, ruleMM: 100, ruleMove: true, targets: [65, 135], need: 2, start: 30,
+      drawing: `<svg viewBox="0 0 250 140" width="240" height="134"><rect class="pt" x="22" y="46" width="208" height="52"/>
+        <line x1="106.5" x2="106.5" y1="46" y2="98" stroke="${NV}" stroke-width="2"/><line x1="197.5" x2="197.5" y1="46" y2="98" stroke="${NV}" stroke-width="2"/>
+        <line class="dl" x1="22" x2="22" y1="42" y2="18"/><line class="dl" x1="106.5" x2="106.5" y1="42" y2="18"/><line class="dl" x1="197.5" x2="197.5" y1="42" y2="18"/>
+        ${dimH(22, 106.5, null, 26, '65', SM)}${dimH(106.5, 197.5, null, 26, '70', SM)}
+        <text class="hn" x="106.5" y="118" text-anchor="middle">A</text><text class="hn" x="197.5" y="118" text-anchor="middle">B</text></svg>`,
+      note: 'Your rule is only 100 mm long. Drag it to move it along the board.',
+      hintFor: m => m === 70 ? 'Line B is 70 mm from line A, not from the end. Slide the rule so its 0 sits on line A, then measure 70 from there.'
+          : m === 95 ? 'Measure line A from the left end of the board.'
+          : 'Mark line A first. Then slide the rule so its 0 sits exactly on line A, and line B is at 70 on the rule.',
+      done: async c => {
+          const a = c.BX + 65 * c.K, b = c.BX + 135 * c.K;
+          c.res.innerHTML = `<g class="reveal">${dimH(c.BX, a, c.BY, c.BY - 46, '65')}${dimH(a, b, null, c.BY - 46, '70')}<line class="dl" x1="${a}" x2="${a}" y1="${c.BY - 4}" y2="${c.BY - 52}"/><line class="dl" x1="${b}" x2="${b}" y1="${c.BY - 4}" y2="${c.BY - 52}"/>
+              <text class="hn" x="${a - 6}" y="${c.BY + c.BH - 10}" text-anchor="end">A</text><text class="hn" x="${b - 6}" y="${c.BY + c.BH - 10}" text-anchor="end">B</text></g>`;
+          await wait(500);
+      },
+      msg: 'Line B is 65 + 70 = 135 mm from the end. Measuring from your own line keeps the second length accurate.' },
+
+    { kind: 'square', title: 'Mark the hole centres', sc: 'Marking out', prompt: 'Mark a line across the centre line wherever a hole needs to go.',
+      L: 140, Wmm: 40, gauge: 20, targets: [25, 110], need: 2, start: 50,
+      drawing: `<svg viewBox="0 0 250 120" width="240" height="115"><rect class="pt" x="40" y="50" width="196" height="56"/><circle class="pt nf" cx="75" cy="78" r="4.2"/><circle class="pt nf" cx="194" cy="78" r="4.2"/>
+        <line class="cl" x1="75" x2="75" y1="20" y2="92"/><line class="cl" x1="194" x2="194" y1="20" y2="92"/><line class="cl" x1="14" x2="246" y1="78" y2="78"/>
+        <line class="dl" x1="40" x2="40" y1="46" y2="20"/><line class="dl" x1="36" x2="14" y1="50" y2="50"/>
+        ${dimH(40, 75, null, 28, '25', SM)}${dimH(75, 194, null, 28, '85', SM)}${dimV(50, 78, null, 20, '20', SM)}</svg>`,
+      note: 'Two ⌀6 holes. Holes are measured to their centres.',
+      hintFor: m => m === 85 ? 'The 85 is measured from the first hole, not from the end of the board. Where is 85 mm past 25?'
+          : (m === 115 || m === 30) ? 'Measure from 0, at the left end of the board.'
+          : m === 20 ? '20 mm is where the centre line sits, and it is already marked. Your lines go across it.'
+          : 'One line isn\u2019t on a hole centre yet. Use the magnifier to line the pink edge of the blade up exactly.',
+      done: async c => {
+          const y = c.BY + 20 * c.K, x1 = c.BX + 25 * c.K, x2 = c.BX + 110 * c.K;
+          c.res.innerHTML = `<g class="reveal">${dimH(c.BX, x1, c.BY, c.BY - 46, '25')}${dimH(x1, x2, null, c.BY - 46, '85')}<line class="dl" x1="${x2}" x2="${x2}" y1="${c.BY - 4}" y2="${c.BY - 52}"/></g><g class="drl"></g>`;
+          const g = c.res.querySelector('.drl');
+          await drill(g, x1, y, 'Pilot hole'); await drill(g, x2, y, 'Pilot hole');
+      },
+      msg: 'The second hole is 85 mm past the first, so it sits 110 mm from the end. Each pilot hole goes where your line crosses the centre line.' },
+
+    { kind: 'punch', title: 'Centre punch', sc: 'Marking out', prompt: 'Drag each punch mark to the centre of a hole on the drawing.',
+      L: 120, Wmm: 60, targets: [[20, 15], [95, 40]],
+      drawing: `<svg viewBox="-6 0 256 160" width="240" height="150"><rect class="pt" x="62" y="56" width="180" height="90"/><circle class="pt nf" cx="92" cy="78.5" r="6"/><circle class="pt nf" cx="204.5" cy="116" r="6"/>
+        <line class="cl" x1="92" x2="92" y1="28" y2="90"/><line class="cl" x1="12" x2="104" y1="78.5" y2="78.5"/><line class="cl" x1="204.5" x2="204.5" y1="28" y2="128"/><line class="cl" x1="12" x2="216" y1="116" y2="116"/>
+        <line class="dl" x1="62" x2="62" y1="52" y2="28"/><line class="dl" x1="242" x2="242" y1="52" y2="28"/><line class="dl" x1="58" x2="12" y1="56" y2="56"/>
+        ${dimH(62, 92, null, 34, '20', SM)}${dimH(204.5, 242, null, 34, '25', SM)}${dimV(56, 78.5, null, 44, '15', SM)}${dimV(56, 116, null, 18, '40', SM)}
+        <text class="hn" x="100" y="72">1</text><text class="hn" x="213" y="110">2</text></svg>`,
+      note: 'The board is 120 mm long. Holes are measured to their centres.',
+      hintFor: (x, y) => (x === 15 && y === 20) ? 'Across and down are swapped. Hole 1 is 20 mm from the left edge and 15 mm down from the top.'
+          : (x === 25 && y === 40) ? 'Hole 2 is measured from the <b>right</b> edge, but the rule starts on the left. How far from the left is 25 mm in from the right of a 120 mm board?'
+          : (x === 95 && y === 20) ? 'Hole 2 is 40 mm down from the top edge. Follow the pink guide to the rule on the left.'
+          : Math.hypot(x - 20, y - 15) < Math.hypot(x - 95, y - 40) ? 'Check hole 1: 20 mm from the left edge and 15 mm down from the top. Follow the pink guides to read each rule.'
+          : 'Check hole 2: 40 mm down from the top, and 25 mm in from the right edge.',
+      msg: 'Hole 2 is 25 mm from the right of a 120 mm board, so it sits 95 mm from the left. Every pilot hole starts with an accurate punch mark.' },
+    { kind: 'punch', title: 'Punch from hole 1', sc: 'Marking out', prompt: 'Punch hole 1 from the edges, then punch hole 2 from hole 1.',
+      L: 120, Wmm: 60, targets: [[25, 20], [85, 45]],
+      drawing: `<svg viewBox="-6 0 256 160" width="240" height="150"><rect class="pt" x="62" y="56" width="180" height="90"/><circle class="pt nf" cx="99.5" cy="86" r="6"/><circle class="pt nf" cx="189.5" cy="123.5" r="6"/>
+        <line class="cl" x1="99.5" x2="99.5" y1="28" y2="98"/><line class="cl" x1="24" x2="111.5" y1="86" y2="86"/><line class="cl" x1="189.5" x2="189.5" y1="28" y2="135.5"/><line class="cl" x1="24" x2="201.5" y1="123.5" y2="123.5"/>
+        <line class="dl" x1="62" x2="62" y1="52" y2="28"/><line class="dl" x1="58" x2="24" y1="56" y2="56"/>
+        ${dimH(62, 99.5, null, 34, '25', SM)}${dimH(99.5, 189.5, null, 34, '60', SM)}${dimV(56, 86, null, 30, '20', SM)}${dimV(86, 123.5, null, 30, '25', SM)}
+        <text class="hn" x="107" y="80">1</text><text class="hn" x="198" y="117">2</text></svg>`,
+      note: 'Holes are measured to their centres.',
+      hintFor: (x, y) => (x === 60 && y === 25) ? 'Hole 2 is measured from hole 1, not from the edges. Start at hole 1, then go 60 mm across and 25 mm down.'
+          : (x === 85 && y === 25) ? 'Hole 2 is 25 mm lower than hole 1, not 25 mm from the top edge.'
+          : (x === 60 && y === 45) ? 'Hole 2 is 60 mm across from hole 1, not 60 mm from the left edge.'
+          : (x === 20 && y === 25) ? 'Across and down are swapped. Hole 1 is 25 mm from the left edge and 20 mm down from the top.'
+          : Math.hypot(x - 25, y - 20) < Math.hypot(x - 85, y - 45) ? 'Check hole 1: 25 mm from the left edge and 20 mm down from the top.'
+          : 'Check hole 2: start at hole 1, then add 60 mm across and 25 mm down.',
+      msg: 'Hole 2 is 25 + 60 = 85 mm across and 20 + 25 = 45 mm down. Chain dimensions are measured from the last feature.' }
+];
+const TOTAL = QS.length;
+const CHIP = { label: 'Label the drawing', mcpic: 'Multiple choice', cloze: 'Fill the gaps', measure: 'Measure', inputs: 'Read the drawing', spot: 'Multiple choice', square: 'Mark out', punch: 'Mark out' };
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+/* ========================== Buckles (localStorage) ======================= */
+const PAGE_ID = 'engineering-drawings-cfu';
+QS.forEach(q => { q.id = q.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'); q.buckles = 1; });
+const Buckles = {
+    key: 'buckles-shared',
+    posKey: 'pos-' + PAGE_ID,
+    ns(id) { return PAGE_ID + ':' + id; },
+    load() { try { return JSON.parse(localStorage.getItem(this.key)) || {}; } catch (e) { return {}; } },
+    save(d) { try { localStorage.setItem(this.key, JSON.stringify(d)); } catch (e) {} },
+    isDone(id) { return !!this.load()[this.ns(id)]; },
+    award(id, n) { const d = this.load(); const k = this.ns(id); if (!d[k]) { d[k] = n; this.save(d); } },
+    total() { return Object.values(this.load()).reduce((a, b) => a + b, 0); },
+    setPos(i) { try { localStorage.setItem(this.posKey, String(i)); } catch (e) {} },
+    getPos() { try { const v = parseInt(localStorage.getItem(this.posKey), 10); return isNaN(v) ? 0 : v; } catch (e) { return 0; } }
+};
+function refreshCount() { $('#buckleCount').textContent = Buckles.total(); }
+function celebrate(n) {
+    const a = $('#award');
+    $('#awardText').textContent = '+' + n + ' Buckle' + (n > 1 ? 's' : '') + '!';
+    a.classList.remove('hide'); a.classList.add('show');
+    burstConfetti();
+    setTimeout(() => { a.classList.remove('show'); a.classList.add('hide'); setTimeout(() => a.classList.remove('hide'), 360); }, 1100);
+}
+function burstConfetti() {
+    const canvas = document.createElement('canvas');
+    canvas.className = 'confetti-canvas';
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext('2d'), dpr = window.devicePixelRatio || 1;
+    canvas.width = innerWidth * dpr; canvas.height = innerHeight * dpr; ctx.scale(dpr, dpr);
+    const colors = ['#ea008a', '#1b1f45', '#f7a8d4', '#c3c6d0'], cx = innerWidth / 2, cy = innerHeight / 2, parts = [];
+    for (let i = 0; i < 150; i++) {
+        const angle = Math.random() * Math.PI * 2, speed = 4 + Math.random() * 10;
+        parts.push({ x: cx, y: cy, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 4, size: 5 + Math.random() * 7,
+            color: colors[Math.floor(Math.random() * colors.length)], rot: Math.random() * Math.PI, vrot: (Math.random() - .5) * .3, life: 0 });
+    }
+    const gravity = 0.22, drag = 0.992; let frame = 0;
+    (function tick() {
+        frame++;
+        ctx.clearRect(0, 0, innerWidth, innerHeight);
+        parts.forEach(p => {
+            p.vx *= drag; p.vy = p.vy * drag + gravity; p.x += p.vx; p.y += p.vy; p.rot += p.vrot; p.life++;
+            ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.globalAlpha = Math.max(0, 1 - p.life / 95);
+            ctx.fillStyle = p.color; ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6); ctx.restore();
+        });
+        if (frame < 95) requestAnimationFrame(tick); else canvas.remove();
+    })();
+}
+
+/* ---------- flow ---------- */
+let qi = 0, firstTry = [], tries = 0, mode = 'check', cur = null;
+function render() {
+    runId++;
+    content.innerHTML = ''; tries = 0; mode = 'check';
+    const q = QS[qi];
+    counter.innerHTML = `Question <b>${qi + 1}</b> / ${TOTAL}`;
+    Buckles.setPos(qi);
+    progress.style.width = (qi / TOTAL * 100) + '%';
+    const wrap = el('div', 'q');
+    wrap.appendChild(el('div', 'qhead', `<div class="qtitle">${q.title}</div><div class="tchip">${q.chip || CHIP[q.kind]}</div><div class="sctag">${q.sc}</div>`));
+    wrap.appendChild(el('div', 'prompt', q.prompt));
+    const body = el('div', 'body'); wrap.appendChild(body); content.appendChild(wrap);
+    cur = KINDS[q.kind](q, body);
+    symFix(content);
+    say(Buckles.isDone(q.id) ? `${cur.instr} You\u2019ve already earned this buckle.` : cur.instr);
+    btn.hidden = false; btn.textContent = 'Check';
+    refresh();
+}
+function refresh() { if (mode === 'check') btn.disabled = !cur.ready(); }
+function check() {
+    tries++;
+    const r = cur.check();
+    if (r.ok) {
+        const q = QS[qi];
+        if (tries === 1) firstTry[qi] = true;
+        if (!Buckles.isDone(q.id)) { Buckles.award(q.id, q.buckles); refreshCount(); celebrate(q.buckles); }
+        say(`<b>Correct.</b> ${q.msg}`);
+        mode = 'next'; btn.disabled = true; btn.textContent = qi === TOTAL - 1 ? 'Finish' : 'Next';
+        const id = runId; let fired = false;
+        const go = () => {
+            if (fired || id !== runId || mode !== 'next') return; fired = true;
+            btn.disabled = false; btn.classList.remove('pop-in'); void btn.offsetWidth; btn.classList.add('pop-in'); btn.focus({ preventScroll: true });
+        };
+        const p = cur.done ? cur.done() : null;
+        if (p && p.then) { p.then(go); setTimeout(go, 4500); } else go();
+    } else {
+        say(`<b class="no">Not quite.</b> ${r.hint}`);
+        refresh();
+    }
+}
+btn.onclick = () => {
+    if (btn.disabled) return;
+    if (mode === 'check') check();
+    else if (qi === TOTAL - 1) finish();
+    else { qi++; render(); }
+};
+const enterSubmits = inp => inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); if (!btn.disabled && mode === 'check') check(); } });
+function finish() {
+    runId++;
+    content.innerHTML = '';
+    btn.hidden = true;
+    counter.innerHTML = '<b>Complete</b>';
+    progress.style.width = '100%';
+    const n = firstTry.filter(Boolean).length;
+    Buckles.setPos(TOTAL);
+    say('Take a screenshot of this screen and paste it into Stile as evidence of your work.');
+    const c = el('div', 'center');
+    const dots = QS.map((_, i) => `<span class="${firstTry[i] ? 'y' : ''}">${i + 1}</span>`).join('');
+    const earned = QS.filter(q => Buckles.isDone(q.id)).length;
+    const card = el('div', 'scorecard pop-in', `<img src="buckle.svg" alt="" class="done-buckle" onerror="this.style.display='none'"><div class="big">${earned} / ${TOTAL}</div><div class="dlbl">Buckles earned</div>
+        <div class="dlbl sub">Correct on the first try: ${n} / ${TOTAL}</div><div class="dots">${dots}</div>`);
+    const again = el('button', 'again', 'Start again');
+    again.onclick = () => { qi = 0; firstTry = []; Buckles.setPos(0); render(); };
+    c.append(card, again); content.appendChild(c);
+}
+
+/* ---------- shared cores ---------- */
+function mcCore(els, q, extra = {}) {
+    let s = null;
+    els.forEach((b, i) => b.onclick = () => {
+        if (mode !== 'check' || b.classList.contains('wrong')) return;
+        els.forEach(x => x.classList.remove('sel')); b.classList.add('sel'); s = i; refresh();
+    });
+    return {
+        instr: extra.instr || 'Choose an answer, then press <b>Check</b>.',
+        ready: () => s !== null,
+        check() {
+            const b = els[s];
+            b.classList.remove('sel');
+            if (s === q.answer) { b.classList.add('right'); els.forEach(x => x.disabled = true); return { ok: true }; }
+            b.classList.add('wrong'); b.disabled = true;
+            const h = q.opts[s].hint; s = null; return { ok: false, hint: h };
+        },
+        done: extra.done
+    };
+}
+function slotCheck(zones, noun) {
+    let hint = null, bad = 0;
+    zones.forEach(z => {
+        const t = z.box.querySelector('.tile'); z.el.classList.remove('wrong');
+        if (!t || z.locked) return;
+        t.classList.remove('wrong'); void t.offsetWidth;
+        if (t.dataset.k === z.sl.ans) { t.classList.add('right'); z.locked = true; }
+        else { bad++; t.classList.add('wrong'); void z.el.offsetWidth; z.el.classList.add('wrong'); if (!hint) hint = (z.sl.hints && z.sl.hints[t.dataset.k]) || z.sl.hint; }
+    });
+    return bad ? { ok: false, hint: (bad > 1 ? `${bad} ${noun} need changing. ` : '') + hint } : { ok: true };
+}
+const L = 'ABCD';
+
+const KINDS = {
+    /* picture multiple choice */
+    mcpic(q, body) {
+        const g = el('div', 'pgrid');
+        const els = q.opts.map((o, i) => { const b = el('button', 'pcard', `<span class="l">${L[i]}</span>${o.svg}${o.t ? `<span class="cap">${o.t}</span>` : ''}`); g.appendChild(b); return b; });
+        body.appendChild(g);
+        return mcCore(els, q);
+    },
+
+    /* drag labels or values onto a drawing */
+    label(q, body) {
+        const wrap = el('div', 'bwrap'); wrap.style.width = q.w + 'px'; wrap.style.height = q.h + 'px';
+        wrap.innerHTML = `<svg viewBox="0 0 ${q.w} ${q.h}" width="${q.w}" height="${q.h}">${q.svg}</svg>`;
+        const side = el('div', 'bside', `<div class="dlbl">${q.poolLbl}</div>`); side.style.height = q.h + 'px';
+        const pool = el('div', 'pool' + (q.wrapPool ? ' wrapr' : '')); side.appendChild(pool);
+        body.append(wrap, side);
+        const zones = q.slots.map((sl, i) => {
+            const s = el('div', 'slot'); Object.assign(s.style, { left: sl.x + 'px', top: sl.y + 'px', width: (sl.w || 200) + 'px', height: (sl.h || 50) + 'px' });
+            s.tabIndex = 0; s.setAttribute('aria-label', 'Drop space ' + (i + 1)); wrap.appendChild(s);
+            return { el: s, box: s, cap: 1, sl, onPut: () => s.classList.add('filled'), onTake: () => s.classList.remove('filled') };
+        });
+        const D = dnd({ el: pool, box: pool, cap: Infinity, pool: true }, zones, () => { zones.forEach(z => z.el.classList.remove('wrong')); refresh(); });
+        shuffle(q.tiles).forEach(t => pool.appendChild(D.tile(t)));
+        return {
+            instr: `Drag each one onto a box (or tap it, then a box), then press <b>Check</b>. ${q.tiles.length - q.slots.length === 1 ? 'One is' : 'Two are'} not needed.`,
+            ready: () => zones.every(z => z.box.querySelector('.tile')),
+            check: () => slotCheck(zones, q.wrapPool ? 'values' : 'labels'),
+            done: q.done ? () => q.done(wrap.querySelector('svg')) : null
+        };
+    },
+
+    /* sentences with gaps */
+    cloze(q, body) {
+        body.style.gap = '40px';
+        const col = el('div', 'cloze'), zones = [];
+        q.lines.forEach(line => {
+            const p = el('div', 'cline');
+            line.forEach(part => {
+                if (typeof part === 'string') { p.appendChild(el('span', '', part)); return; }
+                const b = el('span', 'blank'); b.tabIndex = 0; b.setAttribute('aria-label', 'Gap ' + (zones.length + 1)); p.appendChild(b);
+                zones.push({ el: b, box: b, cap: 1, sl: part, onPut: () => b.classList.add('filled'), onTake: () => b.classList.remove('filled') });
+            });
+            col.appendChild(p);
+        });
+        const pool = el('div', 'pool tray'); col.appendChild(pool);
+        const sc = el('div', 'scene'); sc.innerHTML = q.side;
+        body.append(col, sc);
+        const D = dnd({ el: pool, box: pool, cap: Infinity, pool: true }, zones, () => { zones.forEach(z => z.el.classList.remove('wrong')); refresh(); });
+        shuffle(q.tiles).forEach(t => pool.appendChild(D.tile(t)));
+        return {
+            instr: 'Drag a number into each gap (or tap a number, then a gap), then press <b>Check</b>.',
+            ready: () => zones.every(z => z.box.querySelector('.tile')),
+            check: () => slotCheck(zones, 'gaps')
+        };
+    },
+
+    /* slide a steel rule and read a length */
+    measure(q, body) {
+        const W = 740, H = 330, K = 7, PX = 110, PY = 76, PL = q.len * K, PH = 150, PAD = 14;
+        const sc = el('div', 'scene');
+        sc.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="734" height="327">
+            <rect x="${PX}" y="${PY}" width="${PL}" height="${PH}" fill="${WOOD}" stroke="${NV}" stroke-width="3"/>${grainSVG(PX, PY, PL, PH, 36)}
+            <text class="oname" x="${PX + PL / 2}" y="${PY + PH / 2 + 7}" text-anchor="middle">Bracket</text>
+            <g class="dimr"></g>
+            <g class="rl" tabindex="0" role="slider" aria-label="Steel rule">${ruleSVG({ x0: 0, y0: 0, mm: 90, K, side: 1, padA: PAD, padB: PAD, w: 50 })}</g>
+            <text class="leg" x="16" y="${H - 14}">Drag the rule left or right</text></svg>`;
+        const side = el('div', 'side');
+        side.innerHTML = `<div class="card"><div class="dlbl">Length</div><div class="mrow"><input class="nin" inputmode="decimal" autocomplete="off" aria-label="Length in millimetres"><span class="u">mm</span></div></div>
+            <div class="note">The bracket sits on the rule\u2019s top edge. Read the rule where each end of the bracket lands.</div>`;
+        body.append(sc, side);
+        const svg = sc.querySelector('svg'), rl = svg.querySelector('.rl'), inp = side.querySelector('input'), dimr = svg.querySelector('.dimr');
+        let rx = PX + PAD, off = 0, lock = false;
+        const upd = () => rl.setAttribute('transform', `translate(${f1(rx)} ${PY + PH})`);
+        upd();
+        dragOn(rl, svg, { start: p => { if (lock) return false; off = p.x - rx; rl.classList.add('drag'); }, move: p => { rx = clamp(p.x - off, 30, 300); upd(); }, end: () => rl.classList.remove('drag') });
+        rl.addEventListener('keydown', e => { if (lock || !/Arrow(Left|Right)/.test(e.key)) return; e.preventDefault(); rx = clamp(rx + (e.key === 'ArrowRight' ? 1 : -1) * K / 2, 30, 300); upd(); });
+        inp.addEventListener('input', () => { inp.classList.remove('wrong'); refresh(); });
+        enterSubmits(inp);
+        const val = () => parseFloat(inp.value.replace(',', '.'));
+        return {
+            instr: 'Line up the rule, type the length, then press <b>Check</b>.',
+            ready: () => !isNaN(val()),
+            check() {
+                const v = val();
+                if (v === q.len) { inp.classList.add('right'); inp.readOnly = true; return { ok: true }; }
+                inp.classList.remove('wrong'); void inp.offsetWidth; inp.classList.add('wrong');
+                return { ok: false, hint: q.hintFor(v) };
+            },
+            async done() {
+                lock = true; rl.style.cursor = 'default';
+                const target = PX;
+                const from = rx;
+                await play(450, k => { rx = from + (target - from) * easeInOut(k); upd(); });
+                dimr.innerHTML = `<g class="reveal">${dimH(PX, PX + PL, PY, PY - 40, String(q.len))}</g>`;
+                await wait(500);
+            }
+        };
+    },
+
+    /* read sizes from a two view drawing */
+    inputs(q, body) {
+        const sc = el('div', 'scene'); sc.innerHTML = `<svg viewBox="0 0 750 330" width="740" height="326">${q.svg}</svg>`;
+        const col = el('div', 'qrows');
+        const ins = q.rows.map((r, i) => {
+            const row = el('div', 'qrow', `<span class="qn">${i + 1}</span><span>${r.t}</span><input class="nin" inputmode="decimal" autocomplete="off" aria-label="${r.t}"><span class="u">mm</span>`);
+            col.appendChild(row);
+            const inp = row.querySelector('input');
+            inp.addEventListener('input', () => { inp.classList.remove('wrong'); refresh(); });
+            inp.addEventListener('keydown', e => { if (e.key !== 'Enter') return; e.preventDefault(); const nx = ins[i + 1]; if (nx) nx.focus(); else if (!btn.disabled && mode === 'check') check(); });
+            return inp;
+        });
+        body.append(sc, col);
+        return {
+            instr: 'Type each answer in millimetres, then press <b>Check</b>.',
+            ready: () => ins.every(x => x.value.trim() !== ''),
+            check() {
+                let hint = null, bad = 0;
+                ins.forEach((x, i) => {
+                    if (x.readOnly) return;
+                    const v = parseFloat(x.value.replace(',', '.'));
+                    if (v === q.rows[i].a) { x.classList.add('right'); x.readOnly = true; }
+                    else { bad++; x.classList.remove('wrong'); void x.offsetWidth; x.classList.add('wrong'); if (!hint) hint = `Question ${i + 1}: ` + q.rows[i].h(v); }
+                });
+                return bad ? { ok: false, hint } : { ok: true };
+            }
+        };
+    },
+
+    /* choose a spot on a board */
+    spot(q, body) {
+        const K = 4, BX = 60, BY = 40;
+        const d = el('div', 'card', `<div class="dlbl">The drawing</div>${q.drawing}`);
+        let marks = '';
+        q.opts.forEach(o => { marks += `<line x1="${o.x}" y1="${o.y}" x2="${o.x + o.dx * .6}" y2="${o.y + o.dy * .6}" stroke="#9a9a9a" stroke-width="2"/><g stroke="${NV}" stroke-width="2"><line x1="${o.x - 8}" x2="${o.x + 8}" y1="${o.y}" y2="${o.y}"/><line x1="${o.x}" x2="${o.x}" y1="${o.y - 8}" y2="${o.y + 8}"/></g>`; });
+        const b = el('div', 'card', `<div class="dlbl">Your board</div><div class="bd"><svg viewBox="0 0 480 300" width="480" height="300">
+            <rect x="${BX}" y="${BY}" width="${100 * K}" height="${60 * K}" fill="${WOOD}" stroke="${NV}" stroke-width="3"/>${grainSVG(BX, BY, 100 * K, 60 * K, 44)}
+            ${ruleSVG({ x0: BX, y0: BY, mm: 100, K, side: -1, w: 28 })}${ruleSVG({ axis: 'y', x0: BX, y0: BY, mm: 60, K, side: -1, w: 30 })}
+            ${marks}<g class="drl"></g></svg></div>`);
+        body.append(d, b);
+        const bd = b.querySelector('.bd');
+        const els = q.opts.map((o, i) => { const c = el('button', 'cand', L[i]); c.style.left = (o.x + o.dx - 20) + 'px'; c.style.top = (o.y + o.dy - 20) + 'px'; c.setAttribute('aria-label', 'Spot ' + L[i]); bd.appendChild(c); return c; });
+        return mcCore(els, q, { instr: 'Choose a spot on the board, then press <b>Check</b>.', done: () => { const o = q.opts[q.answer]; return drill(b.querySelector('.drl'), o.x, o.y); } });
+    },
+
+    /* slide a try square and mark lines */
+    square(q, body) {
+        body.style.gap = '20px';
+        const W = 880, H = 370, K = q.K || 5.5, BX = q.BX ?? 50, BY = 106, RW = 30, LEN = q.L, BL = LEN * K, BH = q.Wmm * K, RM = q.ruleMM || LEN;
+        const rid = 'rk' + qi, cid = 'lc' + qi, hid = 'ht' + qi;
+        const gauge = q.gauge ? `<line x1="${BX}" x2="${BX + BL}" y1="${BY + q.gauge * K}" y2="${BY + q.gauge * K}" stroke="#5b6078" stroke-width="2"/><text class="leg" x="${BX + 67 * K}" y="${BY + q.gauge * K + 24}" text-anchor="middle" style="font-size:15px">Centre line, already marked</text>` : '';
+        const sc = el('div', 'scene');
+        sc.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="856" height="${Math.round(H * 856 / W)}">
+            <defs><clipPath id="${cid}"><rect x="-100" y="6" width="200" height="84" rx="10"/></clipPath>
+            <pattern id="${hid}" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="10" stroke="${NV}" stroke-width="2.5" opacity=".2"/></pattern></defs>
+            <rect x="${BX}" y="${BY}" width="${BL}" height="${BH}" fill="${WOOD}" stroke="${NV}" stroke-width="3"/>${grainSVG(BX, BY, BL, BH, 40)}${gauge}
+            <g id="${rid}"><g class="rulem${q.ruleMove ? ' rl' : ''}"${q.ruleMove ? ' tabindex="0" role="slider" aria-label="Steel rule"' : ''}>${ruleSVG({ x0: 0, y0: BY, mm: RM, K, side: 1, w: RW })}${q.ruleMove ? `<g transform="translate(${RM * K} ${BY})"><rect width="28" height="${RW}" rx="5" fill="${PK}"/><path d="M5 ${RW / 2} l7 -6 v12z M23 ${RW / 2} l-7 -6 v12z" fill="#fff"/></g>` : ''}</g><g class="mk"></g></g>
+            <g class="res"></g>
+            <g class="sq" tabindex="0" role="slider" aria-label="Try square">
+                <rect x="-16" y="${BY - 14}" width="54" height="${BH + 54}" fill="transparent"/>
+                <rect x="0" y="${BY - 12}" width="20" height="${BH + 14}" fill="#cfd5e0" fill-opacity=".6" stroke="${NV}" stroke-width="2"/>
+                <rect class="stk" x="-2" y="${BY + BH}" width="132" height="34" rx="4" fill="${NV}"/>
+                <circle cx="56" cy="${BY + BH + 17}" r="3.5" fill="#fff" opacity=".55"/><circle cx="106" cy="${BY + BH + 17}" r="3.5" fill="#fff" opacity=".55"/>
+                <line x1="0" x2="0" y1="${BY - 12}" y2="${BY + BH}" stroke="${PK}" stroke-width="3"/>
+            </g>
+            <g class="lp" pointer-events="none">
+                <line x1="0" x2="0" y1="90" y2="${BY - 12}" stroke="${NV}" stroke-width="1.5" stroke-dasharray="3 3"/>
+                <g clip-path="url(#${cid})"><rect x="-100" y="6" width="200" height="84" fill="#fff"/><g class="lz"><use href="#${rid}"/></g></g>
+                <rect x="-100" y="6" width="200" height="84" rx="10" fill="none" stroke="${NV}" stroke-width="3"/>
+                <line x1="0" x2="0" y1="6" y2="90" stroke="${PK}" stroke-width="3"/>
+            </g></svg>`;
+        const side = el('div', 'side');
+        side.innerHTML = `<div class="card"><div class="dlbl">The drawing</div>${q.drawing}${q.note ? `<div class="note">${q.note}</div>` : ''}</div>
+            <div class="tools"><button class="tool pk mkb">${PENCIL}Mark line</button><button class="tool erb">Erase</button></div>
+            <div class="note cnt"></div>`;
+        body.append(sc, side);
+        const svg = sc.querySelector('svg'), sq = svg.querySelector('.sq'), lp = svg.querySelector('.lp'), lz = svg.querySelector('.lz'), mk = svg.querySelector('.mk');
+        const mkb = side.querySelector('.mkb'), erb = side.querySelector('.erb'), cnt = side.querySelector('.cnt');
+        let mm = q.start, marks = [], off = 0, ro = q.ruleStart || 0, roff = 0;
+        const rulem = svg.querySelector('.rulem'), updRule = () => rulem.setAttribute('transform', `translate(${f1(BX + ro * K)} 0)`);
+        updRule();
+        if (q.ruleMove) {
+            dragOn(rulem, svg, {
+                start: p => { if (mode !== 'check') return false; roff = p.x - (BX + ro * K); rulem.classList.add('drag'); },
+                move: p => { ro = clamp(Math.round((p.x - roff - BX) / K), 0, LEN - RM); updRule(); },
+                end: () => rulem.classList.remove('drag')
+            });
+            rulem.addEventListener('keydown', e => { if (mode !== 'check' || !/Arrow(Left|Right)/.test(e.key)) return; e.preventDefault(); ro = clamp(ro + (e.key === 'ArrowRight' ? 1 : -1) * (e.shiftKey ? 10 : 1), 0, LEN - RM); updRule(); });
+        }
+        const locked = new Set(), bad = new Set();
+        const xOf = m => BX + m * K;
+        const upd = () => {
+            const E = f1(xOf(mm));
+            sq.setAttribute('transform', `translate(${E} 0)`); lp.setAttribute('transform', `translate(${E} 0)`);
+            lz.setAttribute('transform', `translate(0 48) scale(2) translate(${-E} ${-(BY + 15)})`);
+        };
+        const count = () => { cnt.innerHTML = `Lines marked: <b>${marks.length}</b> of ${q.need}`; erb.disabled = !marks.some(m => !locked.has(m)) || mode !== 'check'; };
+        function drawMarks(anim) {
+            mk.innerHTML = marks.map(m => {
+                const ok = locked.has(m), no = bad.has(m);
+                return `<line data-m="${m}" x1="${f1(xOf(m))}" x2="${f1(xOf(m))}" y1="${BY}" y2="${BY + BH}" stroke="${ok ? PK : '#3b4060'}" stroke-width="${ok ? 3 : 2}"${no ? ' stroke-dasharray="6 6" opacity=".55"' : ''}/>`;
+            }).join('');
+            if (anim !== undefined) { const ln = mk.querySelector(`[data-m="${anim}"]`); if (ln) play(320, k => ln.setAttribute('y2', f1(BY + BH * easeOut(k)))); }
+        }
+        function mark() {
+            if (mode !== 'check' || marks.includes(mm)) return;
+            marks.push(mm);
+            while (marks.length > q.need) { const i = marks.findIndex(m => !locked.has(m)); if (i < 0) break; bad.delete(marks[i]); marks.splice(i, 1); }
+            drawMarks(mm); count(); refresh();
+        }
+        mkb.onclick = mark;
+        erb.onclick = () => { if (mode !== 'check') return; marks = marks.filter(m => locked.has(m)); bad.clear(); drawMarks(); count(); refresh(); };
+        dragOn(sq, svg, {
+            start: p => { if (mode !== 'check') return false; off = p.x - xOf(mm); sq.classList.add('drag'); },
+            move: p => { mm = clamp(Math.round((p.x - off - BX) / K), 0, LEN); upd(); },
+            end: () => sq.classList.remove('drag')
+        });
+        sq.addEventListener('keydown', e => {
+            if (mode !== 'check') return;
+            if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); mm = clamp(mm + (e.key === 'ArrowRight' ? 1 : -1) * (e.shiftKey ? 10 : 1), 0, LEN); upd(); }
+            else if (e.key === 'Enter' || e.key === ' ' || e.key.toLowerCase() === 'm') { e.preventDefault(); mark(); }
+        });
+        upd(); count();
+        const ctx = { svg, res: svg.querySelector('.res'), BX, BY, K, BH, BL, hid };
+        return {
+            instr: 'Drag the try square (or use the arrow keys), then press <b>Mark line</b>. Press <b>Check</b> when you are done.',
+            ready: () => marks.length === q.need,
+            check() {
+                let hint = null, nb = 0;
+                bad.clear();
+                marks.forEach(m => { if (q.targets.includes(m)) locked.add(m); else { bad.add(m); nb++; if (!hint) hint = q.hintFor(m); } });
+                drawMarks(); count();
+                return nb ? { ok: false, hint: (nb > 1 ? `${nb} lines are in the wrong place. ` : '') + hint } : { ok: true };
+            },
+            async done() {
+                mkb.disabled = true; erb.disabled = true;
+                await play(300, k => { sq.setAttribute('opacity', 1 - k); lp.setAttribute('opacity', 1 - k); });
+                sq.style.display = 'none'; lp.style.display = 'none';
+                await q.done(ctx);
+            }
+        };
+    },
+
+    /* drag punch marks to hole centres */
+    punch(q, body) {
+        body.style.gap = '20px';
+        const W = 880, H = 370, K = 5, BX = 96, BY = 54, LEN = q.L, WM = q.Wmm, BL = LEN * K, BH = WM * K;
+        const TRAY = [{ x: 790, y: 160 }, { x: 790, y: 250 }];
+        const sc = el('div', 'scene');
+        sc.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="856" height="${Math.round(H * 856 / W)}">
+            <rect x="${BX}" y="${BY}" width="${BL}" height="${BH}" fill="${WOOD}" stroke="${NV}" stroke-width="3"/>${grainSVG(BX, BY, BL, BH, 46)}
+            ${ruleSVG({ x0: BX, y0: BY, mm: LEN, K, side: -1, w: 30 })}${ruleSVG({ axis: 'y', x0: BX, y0: BY, mm: WM, K, side: -1, w: 34 })}
+            <rect x="735" y="110" width="110" height="200" rx="10" fill="${LT}" stroke="${GR}" stroke-width="3" stroke-dasharray="7 6"/>
+            <text class="spd" x="790" y="98" text-anchor="middle" style="font-size:18px">Punch marks</text>
+            <g class="gd"></g><g class="res"></g><g class="pms"></g></svg>`;
+        const side = el('div', 'side');
+        side.innerHTML = `<div class="card"><div class="dlbl">The drawing</div>${q.drawing}<div class="note">${q.note}</div></div>`;
+        body.append(sc, side);
+        const svg = sc.querySelector('svg'), pms = svg.querySelector('.pms'), gd = svg.querySelector('.gd'), res = svg.querySelector('.res');
+        const ms = q.targets.map((_, i) => {
+            pms.insertAdjacentHTML('beforeend', `<g class="pm" tabindex="0" role="button" aria-label="Punch mark ${i + 1}"><circle r="26" fill="transparent"/><circle class="pr" r="15"/><line x1="-22" x2="22" y1="0" y2="0" stroke="${NV}" stroke-width="1.5"/><line x1="0" x2="0" y1="-22" y2="22" stroke="${NV}" stroke-width="1.5"/><circle r="2.6" fill="${NV}"/></g>`);
+            return { i, el: pms.lastElementChild, x: TRAY[i].x, y: TRAY[i].y, on: false, ok: false, mx: null, my: null, t: -1 };
+        });
+        const setPos = m => m.el.setAttribute('transform', `translate(${f1(m.x)} ${f1(m.y)})`);
+        const inside = (x, y) => x >= BX - 12 && x <= BX + BL + 12 && y >= BY - 12 && y <= BY + BH + 12;
+        const snapTo = (m, x, y) => { m.mx = clamp(Math.round((x - BX) / K), 0, LEN); m.my = clamp(Math.round((y - BY) / K), 0, WM); m.x = BX + m.mx * K; m.y = BY + m.my * K; m.on = true; };
+        const guides = () => {
+            gd.innerHTML = ms.filter(m => m.on).map(m => `<line x1="${m.x}" x2="${m.x}" y1="${m.y}" y2="${BY}" stroke="${PK}" stroke-width="1.5" stroke-dasharray="4 4"/><line x1="${m.x}" x2="${BX}" y1="${m.y}" y2="${m.y}" stroke="${PK}" stroke-width="1.5" stroke-dasharray="4 4"/>${ah(m.x, BY, -Math.PI / 2, PK, 10, 4.5)}${ah(BX, m.y, Math.PI, PK, 10, 4.5)}`).join('');
+        };
+        const home = m => {
+            const sx = m.x, sy = m.y, T = TRAY[m.i]; m.on = false; m.mx = m.my = null; guides();
+            play(300, k => { const e = easeOut(k); m.x = sx + (T.x - sx) * e; m.y = sy + (T.y - sy) * e; setPos(m); });
+        };
+        ms.forEach(m => {
+            setPos(m);
+            let ox = 0, oy = 0;
+            dragOn(m.el, svg, {
+                start: p => { if (mode !== 'check' || m.ok) return false; ox = p.x - m.x; oy = p.y - m.y; m.el.classList.add('drag'); m.el.classList.remove('wrong'); },
+                move: p => { const x = p.x - ox, y = p.y - oy; if (inside(x, y)) snapTo(m, x, y); else { m.x = x; m.y = y; m.on = false; } setPos(m); guides(); refresh(); },
+                end: () => { m.el.classList.remove('drag'); if (!m.on) home(m); refresh(); }
+            });
+            m.el.addEventListener('keydown', e => {
+                if (mode !== 'check' || m.ok) return;
+                const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
+                if (!d) return;
+                e.preventDefault();
+                const st = (e.shiftKey ? 10 : 1) * K;
+                if (!m.on) snapTo(m, BX + BL / 2, BY + BH / 2); else snapTo(m, m.x + d[0] * st, m.y + d[1] * st);
+                m.el.classList.remove('wrong'); setPos(m); guides(); refresh();
+            });
+        });
+        return {
+            instr: 'Drag both punch marks onto the board (or use the arrow keys), then press <b>Check</b>.',
+            ready: () => ms.every(m => m.on),
+            check() {
+                const used = new Set(ms.filter(m => m.ok).map(m => m.t));
+                let hint = null, nb = 0;
+                ms.filter(m => !m.ok).forEach(m => {
+                    m.el.classList.remove('wrong');
+                    const t = q.targets.findIndex((tg, j) => !used.has(j) && tg[0] === m.mx && tg[1] === m.my);
+                    if (t >= 0) { used.add(t); m.ok = true; m.t = t; m.el.classList.add('right'); }
+                    else {
+                        nb++; void m.el.getBBox(); m.el.classList.add('wrong');
+                        if (!hint) hint = q.targets.some(tg => tg[0] === m.mx && tg[1] === m.my) ? 'Both punch marks are on the same hole. Move one to the other hole.' : q.hintFor(m.mx, m.my);
+                    }
+                });
+                return nb ? { ok: false, hint: (nb > 1 ? 'Both punch marks need moving. ' : '') + hint } : { ok: true };
+            },
+            async done() {
+                gd.innerHTML = '';
+                for (const t of q.targets) await drill(res, BX + t[0] * K, BY + t[1] * K, 'Pilot hole');
+            }
+        };
+    }
+};
+
+/* ---------- drag and drop (drag, or tap a tile then tap a target) ---------- */
+function dnd(pool, zones, onChange) {
+    let sl = null;
+    const all = () => [pool, ...zones];
+    const zoneOf = t => all().find(z => z.box.contains(t));
+    const armAll = on => zones.forEach(z => z.el.classList.toggle('armed', on && !z.locked));
+    const deselect = () => { if (sl) sl.classList.remove('sel'); sl = null; armAll(false); };
+    function moveTo(t, z) {
+        const from = zoneOf(t);
+        t.style.transform = ''; t.classList.remove('wrong');
+        z.box.appendChild(t);
+        if (from && from !== z && from.onTake) from.onTake(t);
+        if (z.onPut) z.onPut(t);
+        deselect(); onChange();
+    }
+    function put(t, z) {
+        const from = zoneOf(t);
+        if (z.locked || from === z) { t.style.transform = ''; return; }
+        if (z.cap === 1) {
+            const ex = z.box.querySelector('.tile');
+            if (ex) { if (ex.classList.contains('right')) { t.style.transform = ''; return; } moveTo(ex, pool); }
+        }
+        moveTo(t, z);
+    }
+    const hit = (x, y) => all().find(z => { const r = z.el.getBoundingClientRect(); return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom; });
+    all().forEach(z => {
+        const act = () => { if (sl && !z.locked) put(sl, z); };
+        z.el.addEventListener('click', act);
+        z.el.addEventListener('keydown', e => { if (e.target === z.el && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); act(); } });
+    });
+    function tile(text) {
+        const t = el('span', 'tile', esc(text)); t.dataset.k = text;
+        t.tabIndex = 0; t.setAttribute('role', 'button');
+        const tap = () => {
+            if (t.classList.contains('right') || mode !== 'check') return;
+            t.style.transform = '';
+            const z = zoneOf(t);
+            if (z !== pool) { if (sl && sl !== t && !z.locked) { put(sl, z); return; } put(t, pool); return; }
+            if (sl === t) { deselect(); return; }
+            deselect(); sl = t; t.classList.add('sel'); armAll(true);
+        };
+        t.addEventListener('click', e => e.stopPropagation());
+        t.addEventListener('pointerdown', e => {
+            if (t.classList.contains('right') || mode !== 'check' || e.button > 0) return;
+            e.preventDefault(); e.stopPropagation(); t.setPointerCapture(e.pointerId);
+            const sx = e.clientX, sy = e.clientY; let moved = false;
+            const move = ev => {
+                const dx = ev.clientX - sx, dy = ev.clientY - sy;
+                if (!moved && Math.hypot(dx, dy) > 6) { moved = true; t.classList.add('drag'); }
+                if (!moved) return;
+                t.style.transform = `translate(${dx / scaleK}px, ${dy / scaleK}px)`;
+                const h = hit(ev.clientX, ev.clientY);
+                all().forEach(z => z.el.classList.toggle('hover', z === h));
+            };
+            const up = ev => {
+                t.removeEventListener('pointermove', move); t.removeEventListener('pointerup', up); t.removeEventListener('pointercancel', up);
+                t.classList.remove('drag'); all().forEach(z => z.el.classList.remove('hover'));
+                if (!moved) { tap(); return; }
+                const h = hit(ev.clientX, ev.clientY);
+                if (h) put(t, h); else t.style.transform = '';
+            };
+            t.addEventListener('pointermove', move); t.addEventListener('pointerup', up); t.addEventListener('pointercancel', up);
+        });
+        t.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); tap(); } });
+        return t;
+    }
+    return { tile };
+}
+
+/* ---------- scale to window ---------- */
+function fit() {
+    const st = $('#stage');
+    scaleK = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+    st.style.transform = `scale(${scaleK})`;
+    st.style.margin = `${(720 * scaleK - 720) / 2}px ${(1280 * scaleK - 1280) / 2}px`;
+}
+window.addEventListener('resize', fit);
+window.addEventListener('storage', e => { if (e.key === 'buckles-shared') refreshCount(); });
+fit();
+(document.fonts ? document.fonts.ready : Promise.resolve()).then(() => {
+    fit(); refreshCount();
+    const pos = Buckles.getPos();
+    if (pos >= TOTAL) finish(); else { qi = Math.max(0, pos); render(); }
+});
+</script>
+</body>
+</html>
